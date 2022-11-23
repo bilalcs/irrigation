@@ -1,0 +1,73 @@
+server:
+  port: 8090
+
+logging:
+  level:
+    root: INFO
+
+spring:
+  jpa:
+    defer-datasource-initialization: true
+  h2:
+    console.enabled: true
+  datasource:
+    #url: jdbc:h2:file:/tmp/irrigation
+    url: jdbc:h2:mem:irrigation
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: bilalalerts@gmail.com
+    password: xbrlbrqlgaexdxfd
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+
+management:
+  security:
+    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+device:
+  command:
+    cron:
+  service:
+    url: http://localhost:8090/device/command
+    retrycount: 5
+
+resilience4j.retry:
+  retry-aspect-order: 2
+  instances:
+    commandRetry:
+      maxAttempts: 3
+      waitDuration: 5s
+      enableExponentialBackoff: true
+      exponentialBackoffMultiplier: 2
+      retryExceptions:
+        - org.springframework.web.client.HttpServerErrorException
+        - java.io.IOException
+        - org.springframework.web.client.RestClientException
+      ignoreExceptions:
+
+resilience4j.circuitbreaker:
+  circuit-breaker-aspect-order: 1
+  instances:
+    commandRetry:
+      waitDurationInOpenState: 50s
+      permittedNumberOfCallsInHalfOpenState: 3
+      slidingWindowType: count-based
+      slidingWindowSize: 5
+      minimumNumberOfCalls: 5
+      slowCallRateThreshold: 50
+      registerHealthIndicator: true
+      failureRateThreshold: 50
+      eventConsumerBufferSize: 10
